@@ -19,7 +19,7 @@ fun createNotification(context: Context, title: String, message: String) {
         .setSmallIcon(R.drawable.egg)
         .setContentTitle(title)
         .setContentText(message)
-        .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+        .setPriority(NotificationCompat.PRIORITY_MAX)
 
     notificationManager.notify(0, builder.build())
 }

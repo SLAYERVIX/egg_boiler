@@ -1,7 +1,7 @@
 package com.example.eggboilder
 
-import android.annotation.SuppressLint
 import android.os.Bundle
+import androidx.activity.viewModels
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.example.eggboilder.databinding.ActivityMainBinding
@@ -11,47 +11,52 @@ import kotlinx.coroutines.withContext
 import java.util.*
 
 class MainActivity : AppCompatActivity() {
-    @SuppressLint("MissingPermission")
 
     private var _binding: ActivityMainBinding? = null
     private val binding get() = _binding!!
 
+    private val viewModel: MainViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         _binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        val timer = Timer()
-        var secondsPassed = 0
-        var minutes: Int
-        var seconds: Int
-        var timeString: String
+        val adapter = TimeAdapter()
+        binding.rvBoil.adapter = adapter
+        adapter.submitList(Boil.list)
 
-        timer.scheduleAtFixedRate(object : TimerTask() {
-            override fun run() {
-                lifecycleScope.launch {
-                    secondsPassed++
-                    minutes = secondsPassed / 60
-                    seconds = secondsPassed % 60
-                    timeString = String.format("%d:%02d", minutes, seconds)
+        viewModel.timeString.observe(this) {
+            binding.textView.text = it
+        }
 
-                    if (secondsPassed == 10) {
-                        createNotification(
-                            this@MainActivity,
-                            Constants.BOILED_TITLE,
-                            Constants.BOILED_TEXT
-                        )
-                    }
+        viewModel.secondsPassed.observe(this) {
+            val title = "Alert"
+            var message = ""
+            when (it) {
+                180 -> message = "Soft boiled yolk and set white."
 
-                    withContext(Dispatchers.Main) {
-                        if (secondsPassed < 60) {
-                            binding.textView.text = seconds.toString()
-                        } else {
-                            binding.textView.text = timeString
-                        }
-                    }
-                }
+                240 -> message = "Slightly set yolk and set white."
+
+                300 -> message = "Slightly set yolk and set white."
+
+                360 -> message = "Hard boiled with lightly soft yolk."
+
+                480 -> message = "Firmly hard boiled."
             }
-        }, 0, 1000)
+
+            createNotification(
+                this@MainActivity,
+                title,
+                message
+            )
+        }
+
+        binding.btnStart.setOnClickListener {
+            viewModel.runTimer()
+        }
+
+        binding.btnReset.setOnClickListener {
+            viewModel.resetTimer()
+        }
     }
 }
